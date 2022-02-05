@@ -1,0 +1,957 @@
+package notepad;
+import java.awt.*;
+import java.awt.event.*;
+import java.io.*;
+import javax.swing.*;
+import javax.swing.event.UndoableEditEvent;
+import javax.swing.event.UndoableEditListener;
+import javax.swing.undo.CannotRedoException;
+import javax.swing.undo.UndoManager;
+
+
+public class Notepad extends JFrame implements ActionListener
+{
+
+/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+/**
+	 * 
+	 */
+JMenuBar m;
+JMenu file,edit,format,view,help,zoom;
+JMenuItem newf,open,save,saveas,selectall,print,close,undo,redo,cut,copy,paste,bcolor,tcolor,font,zoomin,zoomout,about;
+CheckboxGroup fontstyle,fontsize,fonts;
+Checkbox arial,times,comic,f18,f20,f24,f26,f28,f32,regular,bold,italic;
+
+JTextArea t;
+String text=null,str[];
+int i=0;
+FileDialog f;
+Color ch=null,ch1=null;
+int x,x1,x2;
+UndoManager undo1;
+
+        public Notepad()
+	{
+                m = new JMenuBar();
+		
+		file = new JMenu("FILE");
+		edit = new JMenu("EDIT");
+		format = new JMenu("FORMAT");
+		view = new JMenu("VIEW");
+        help = new JMenu("HELP");
+		zoom = new JMenu("ZOOM");
+                
+		newf = new JMenuItem("NEW"); 
+                newf.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, ActionEvent.CTRL_MASK));
+                
+		open = new JMenuItem("OPEN"); 
+                open.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, ActionEvent.CTRL_MASK));
+                
+		save = new JMenuItem("SAVE");
+                save.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, ActionEvent.CTRL_MASK));
+                
+		saveas = new JMenuItem("SAVE AS");  
+                saveas.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S , ActionEvent.CTRL_MASK | ActionEvent.SHIFT_MASK));
+                
+                selectall = new JMenuItem("SELECT ALL");
+                selectall.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, ActionEvent.CTRL_MASK));
+                
+                print = new JMenuItem("PRINT");
+                print.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P, ActionEvent.CTRL_MASK));
+                
+                close = new JMenuItem("EXIT");
+                close.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F4, ActionEvent.ALT_MASK));
+		
+                undo = new JMenuItem("UNDO");
+		undo.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, ActionEvent.CTRL_MASK));
+                
+                redo = new JMenuItem("REDO");
+                redo.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Y, ActionEvent.CTRL_MASK));
+                
+                cut = new JMenuItem("CUT");
+                cut.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, ActionEvent.CTRL_MASK));
+                
+                copy = new JMenuItem("COPY");
+                copy.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, ActionEvent.CTRL_MASK));
+		
+                paste = new JMenuItem("PASTE");
+                paste.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_V, ActionEvent.CTRL_MASK));
+                
+                font = new JMenuItem("FONT...");
+               
+                bcolor = new JMenuItem("BACKGROUND COLOUR");
+		tcolor = new JMenuItem("TEXT COLOR");
+                fonts = new CheckboxGroup();
+                arial = new Checkbox("ARIAL",false,fonts);
+                comic = new Checkbox("COMIC",false,fonts);
+                times = new Checkbox("TIMES NEW ROMAN",false,fonts);
+                
+                fontsize = new CheckboxGroup();
+                f18 = new Checkbox("18",false,fontsize);
+                f20 = new Checkbox("20",false,fontsize);
+                f24= new Checkbox("24",false,fontsize);
+                f26= new Checkbox("26",false,fontsize);
+                f28= new Checkbox("28",false,fontsize);
+                f32= new Checkbox("32",false,fontsize);
+                
+                fontstyle = new CheckboxGroup();
+                regular = new Checkbox("REGULAR",false,fontstyle);
+                bold = new Checkbox("BOLD",false,fontstyle);
+                italic= new Checkbox("ITALIC",false,fontstyle);
+                
+		zoomin = new JMenuItem("ZOOM IN");
+                zoomin.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ADD, ActionEvent.CTRL_MASK));
+		zoomout = new JMenuItem("ZOOM OUT");
+                zoomout.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_SUBTRACT, ActionEvent.CTRL_MASK));
+                about = new JMenuItem("ABOUT");
+               
+                file.add(newf);
+		file.add(open);
+		file.add(save);
+		file.add(saveas);
+                file.add(selectall);
+		file.add(print);
+		file.add(close);
+
+		edit.add(undo);
+		edit.add(redo);
+		edit.add(copy);
+		edit.add(paste);
+
+		format.add(font);
+		format.add(bcolor);
+		format.add(tcolor);
+
+                view.add(zoom);
+                zoom.add(zoomin);
+                zoom.add(zoomout);
+		
+                help.add(about);
+                
+		m.add(file);
+		m.add(edit);
+		m.add(format);
+		m.add(view);
+                m.add(help);
+	
+		setJMenuBar(m);
+		
+                t = new JTextArea();
+		add(t);
+		t.setBounds(0,0,2000,1000);
+                ch = new Color(255,255,255);
+                t.setBackground(ch);
+                ch1 = new Color(0,0,0);
+		t.setForeground(ch1);
+                t.setFont(new Font("Arial",Font.PLAIN,18));
+                JScrollPane scrollPane = new JScrollPane(t,JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+                scrollPane.setBorder(BorderFactory.createEmptyBorder());
+                add(scrollPane).setVisible(true);
+                    
+                newf.addActionListener(this);
+		save.addActionListener(this);
+		saveas.addActionListener(this);
+		open.addActionListener(this);
+		print.addActionListener(this);
+		close.addActionListener(this);
+               
+                bcolor.addActionListener(this);
+		tcolor.addActionListener(this);
+		font.addActionListener(this);
+               
+                undo1 = new UndoManager();
+
+                t.getDocument().addUndoableEditListener(
+                new UndoableEditListener() {
+                    public void undoableEditHappened(UndoableEditEvent e) {
+                        undo1.addEdit(e.getEdit());
+                }
+                });
+
+		undo.addActionListener(this);
+                
+		redo.addActionListener(this);
+                cut.addActionListener(this);
+                copy.addActionListener(this);
+                paste.addActionListener(this);
+                selectall.addActionListener(this);
+                
+                zoomin.addActionListener(this);
+                zoomout.addActionListener(this);
+                
+                about.addActionListener(this);
+	}
+	
+//-----------------------------------------------Foreground&BackgroundColour------------------------------------------------------------------------
+
+class BackgroundColour
+{
+
+JColorChooser color;
+Color col;
+
+	public BackgroundColour()
+	{
+        }
+
+	public Color setBackgroundColour(Notepad n)
+	{
+		JColorChooser color = new JColorChooser();
+		col = new Color(255,255,255);
+		ch = JColorChooser.showDialog(n,"Select a Color",col);
+		color.setSize(800,800);
+		color.setVisible(true);
+	
+		return ch;
+	}
+
+	public Color setForegroundColour(Notepad n)
+	{
+		JColorChooser color = new JColorChooser();
+		col = new Color(0,0,0);
+		ch1 = JColorChooser.showDialog(n,"Select a Color",col);
+		color.setSize(800,800);
+		color.setVisible(true);
+	
+		return ch1;
+	}
+
+}
+//-----------------------------------------------FONT STYLES----------------------------------------------------------------------
+class FontStyles  implements ItemListener
+{
+  JButton ok ;
+  JTextField l;
+    public FontStyles()
+    {
+    }       
+    
+    public void setFonts(Notepad n)
+    {
+       
+       JFrame f = new JFrame("FONTS");
+       f.setVisible(true);
+       f.setSize(900,1000);
+       
+       ok = new JButton("OK"); 
+       Image icon = Toolkit.getDefaultToolkit().getImage("C:/Users/DELL/Pictures/Screenshots/notepad.png");    
+       f.setIconImage(icon);
+       f.setVisible(true);
+       
+       JLabel size = new JLabel("SIZE");
+       JLabel style = new JLabel("STYLE:");
+       JLabel font = new JLabel("FONT:");
+       l = new JTextField("TejaswiniK");
+       f.setLayout(null);
+         f.add(font).setBounds(30,30,100,20);
+         f.add(arial).setBounds(50, 50, 100, 50);
+         f.add(comic).setBounds(250, 50, 100, 50);
+         f.add(times).setBounds(450, 50, 150, 50);
+         
+         f.add(size).setBounds(30,170,100,20);
+         f.add(f18).setBounds(50, 200, 50, 50);
+         f.add(f20).setBounds(150, 200, 50, 50);
+         f.add(f24).setBounds(250, 200, 50, 50);
+         f.add(f26).setBounds(350, 200, 50, 50);
+         f.add(f28).setBounds(450, 200, 50, 50);
+         f.add(f32).setBounds(550, 200, 50, 50);
+         
+         f.add(style).setBounds(30,320,100,100);
+         f.add(regular).setBounds(150, 350, 100, 50);
+         f.add(bold).setBounds(350, 350, 100, 50);
+         f.add(italic).setBounds(550, 350, 100, 50);
+   
+         f.add(ok).setBounds(500,500,100,100);
+         f.add(l).setBounds(250,500,170,200);
+         l.setFont(new Font("Arial",Font.PLAIN,32));
+         l.setEditable(false);
+        
+        arial.addItemListener(this);
+        times.addItemListener(this);
+        comic.addItemListener(this);
+        
+        f18.addItemListener(this);
+        f20.addItemListener(this);
+        f24.addItemListener(this);
+        f26.addItemListener(this);
+        f28.addItemListener(this);
+        f32.addItemListener(this);
+        
+        regular.addItemListener(this);
+        bold.addItemListener(this);
+        italic.addItemListener(this);
+       
+    }
+    public void actionPerformed(ActionEvent ae)
+    {
+           setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        
+    }
+    public void itemStateChanged(ItemEvent ie)
+    {
+        //---------------------------------------------------------------------------------------------------------------
+        if(f18.getState()==true && arial.getState()==true)
+	{
+                l.setFont(new Font("Arial",Font.PLAIN,18));
+                t.setFont(new Font("Arial",Font.PLAIN,18));
+	}   
+            
+        if(f20.getState()==true && arial.getState()==true)
+	{
+                l.setFont(new Font("Arial",Font.PLAIN,20));
+                t.setFont(new Font("Arial",Font.PLAIN,20));
+	} 
+        
+        if(f24.getState()==true && arial.getState()==true)
+	{
+                l.setFont(new Font("Arial",Font.PLAIN,24));
+                t.setFont(new Font("Arial",Font.PLAIN,24));
+	}       
+        
+        if(f26.getState()==true && arial.getState()==true)
+	{
+                l.setFont(new Font("Arial",Font.PLAIN,26));
+                t.setFont(new Font("Arial",Font.PLAIN,26));   
+	}   
+        
+        if(f28.getState()==true && arial.getState()==true)
+	{
+                l.setFont(new Font("Arial",Font.PLAIN,28));
+                t.setFont(new Font("Arial",Font.PLAIN,28));
+	}   
+        
+        if(f32.getState()==true && arial.getState()==true)
+	{
+                l.setFont(new Font("Arial",Font.PLAIN,32));
+                t.setFont(new Font("Arial",Font.PLAIN,32));
+	}   
+        //----------------------------------------------------------------------------------------------
+        
+               if(f18.getState()==true && arial.getState()==true  &&bold.getState()==true)
+	{
+                l.setFont(new Font("Arial",Font.BOLD,18));
+                t.setFont(new Font("Arial",Font.BOLD,18));
+	}   
+            
+        if(f20.getState()==true && arial.getState()==true  &&bold.getState()==true)
+	{
+                l.setFont(new Font("Arial",Font.BOLD,20));
+                t.setFont(new Font("Arial",Font.BOLD,20));
+	} 
+        
+        if(f24.getState()==true && arial.getState()==true  &&bold.getState()==true)
+	{
+                l.setFont(new Font("Arial",Font.BOLD,24));
+                t.setFont(new Font("Arial",Font.BOLD,24));
+	}   
+        
+        if(f26.getState()==true && arial.getState()==true  &&bold.getState()==true)
+	{
+                l.setFont(new Font("Arial",Font.BOLD,26));
+                t.setFont(new Font("Arial",Font.BOLD,26));
+	}   
+        
+        if(f28.getState()==true && arial.getState()==true  &&bold.getState()==true)
+	{
+                l.setFont(new Font("Arial",Font.BOLD,28));
+                t.setFont(new Font("Arial",Font.BOLD,28));
+	}   
+        
+        if(f32.getState()==true && arial.getState()==true  &&bold.getState()==true)
+	{
+                l.setFont(new Font("Arial",Font.BOLD,32));
+                t.setFont(new Font("Arial",Font.BOLD,32));
+	}
+        //----------------------------------------------------------------------------------------------
+        
+               if(f18.getState()==true && arial.getState()==true &&italic.getState()==true)
+	{
+                l.setFont(new Font("Arial",Font.ITALIC,18));
+                t.setFont(new Font("Arial",Font.ITALIC,18));
+	}   
+            
+        if(f20.getState()==true && arial.getState()==true &&italic.getState()==true)
+	{
+                l.setFont(new Font("Arial",Font.ITALIC,20));
+                t.setFont(new Font("Arial",Font.ITALIC,20));
+	} 
+        
+        if(f24.getState()==true && arial.getState()==true &&italic.getState()==true)
+	{
+                l.setFont(new Font("Arial",Font.ITALIC,24));
+                t.setFont(new Font("Arial",Font.ITALIC,24));
+	}   
+        
+        if(f26.getState()==true && arial.getState()==true &&italic.getState()==true)
+	{
+                l.setFont(new Font("Arial",Font.ITALIC,26));
+                t.setFont(new Font("Arial",Font.ITALIC,26));
+	}   
+        
+        if(f28.getState()==true && arial.getState()==true &&italic.getState()==true)
+	{
+                l.setFont(new Font("Arial",Font.ITALIC,28));
+                t.setFont(new Font("Arial",Font.ITALIC,28));
+	}   
+        
+        if(f32.getState()==true && arial.getState()==true &&italic.getState()==true)
+	{
+                l.setFont(new Font("Arial",Font.ITALIC,32));
+                t.setFont(new Font("Arial",Font.ITALIC,32));
+	}
+        
+        //----------------------------------------------------------------------------------------------
+        //----------------------------------------------------------------------------------------------
+        //---------------------------------------------------------------------------------------------------------------
+        if(f18.getState()==true && comic.getState()==true)
+	{
+                l.setFont(new Font("Comic Sans MS",Font.PLAIN,18));
+                t.setFont(new Font("Comic Sans MS",Font.PLAIN,18));
+	}   
+            
+        if(f20.getState()==true && comic.getState()==true)
+	{
+                l.setFont(new Font("Comic Sans MS",Font.PLAIN,20));
+                t.setFont(new Font("Comic Sans MS",Font.PLAIN,20));
+	} 
+        
+        if(f24.getState()==true && comic.getState()==true)
+	{
+                l.setFont(new Font("Comic Sans MS",Font.PLAIN,24));
+                t.setFont(new Font("Comic Sans MS",Font.PLAIN,24));
+	}   
+        
+        if(f26.getState()==true && comic.getState()==true)
+	{
+                l.setFont(new Font("Comic Sans MS",Font.PLAIN,26));
+                t.setFont(new Font("Comic Sans MS",Font.PLAIN,26));
+	}   
+        
+        if(f28.getState()==true && comic.getState()==true)
+	{
+                l.setFont(new Font("Comic Sans MS",Font.PLAIN,28));
+                t.setFont(new Font("Comic Sans MS",Font.PLAIN,28));
+	}   
+        
+        if(f32.getState()==true && comic.getState()==true)
+	{
+                l.setFont(new Font("Comic Sans MS",Font.PLAIN,32));
+                t.setFont(new Font("Comic Sans MS",Font.PLAIN,32));
+	}   
+        //----------------------------------------------------------------------------------------------
+        
+        if(f18.getState()==true && comic.getState()==true  &&bold.getState()==true)
+	{
+                l.setFont(new Font("Comic Sans MS",Font.BOLD,18));
+                t.setFont(new Font("Comic Sans MS",Font.BOLD,18));
+	}   
+            
+        if(f20.getState()==true && comic.getState()==true  &&bold.getState()==true)
+	{
+                l.setFont(new Font("Comic Sans MS",Font.BOLD,20));
+                t.setFont(new Font("Comic Sans MS",Font.BOLD,20));
+	} 
+        
+        if(f24.getState()==true && comic.getState()==true  &&bold.getState()==true)
+	{
+                l.setFont(new Font("Comic Sans MS",Font.BOLD,24));
+                t.setFont(new Font("Comic Sans MS",Font.BOLD,24));
+	}   
+        
+        if(f26.getState()==true && comic.getState()==true  &&bold.getState()==true)
+	{
+                l.setFont(new Font("Comic Sans MS",Font.BOLD,26));
+                t.setFont(new Font("Comic Sans MS",Font.BOLD,26));
+	}   
+        
+        if(f28.getState()==true && comic.getState()==true  &&bold.getState()==true)
+	{
+                l.setFont(new Font("Comic Sans MS",Font.BOLD,28));
+                t.setFont(new Font("Comic Sans MS",Font.BOLD,28));
+	}   
+        
+        if(f32.getState()==true && comic.getState()==true  &&bold.getState()==true)
+	{
+                l.setFont(new Font("Comic Sans MS",Font.BOLD,32));
+                t.setFont(new Font("Comic Sans MS",Font.BOLD,32));
+	}
+        //----------------------------------------------------------------------------------------------
+        
+        if(f18.getState()==true && comic.getState()==true &&italic.getState()==true)
+	{
+                l.setFont(new Font("Comic Sans MS",Font.ITALIC,18));
+                t.setFont(new Font("Comic Sans MS",Font.ITALIC,18));
+	}   
+            
+        if(f20.getState()==true && comic.getState()==true &&italic.getState()==true)
+	{
+                l.setFont(new Font("Comic Sans MS",Font.ITALIC,20));
+                t.setFont(new Font("Comic Sans MS",Font.ITALIC,20));
+	} 
+        
+        if(f24.getState()==true && comic.getState()==true &&italic.getState()==true)
+	{
+                l.setFont(new Font("Comic Sans MS",Font.ITALIC,24));
+                t.setFont(new Font("Comic Sans MS",Font.ITALIC,24));
+	}   
+        
+        if(f26.getState()==true && comic.getState()==true &&italic.getState()==true)
+	{
+                l.setFont(new Font("Comic Sans MS",Font.ITALIC,26));
+                t.setFont(new Font("Comic Sans MS",Font.ITALIC,26));
+	}   
+        
+        if(f28.getState()==true && comic.getState()==true &&italic.getState()==true)
+	{
+                l.setFont(new Font("Comic Sans MS",Font.ITALIC,28));
+                t.setFont(new Font("Comic Sans MS",Font.ITALIC,28));
+	}   
+        
+        if(f32.getState()==true && comic.getState()==true &&italic.getState()==true)
+	{
+                l.setFont(new Font("Comic Sans MS",Font.ITALIC,32));
+                t.setFont(new Font("Comic Sans MS",Font.ITALIC,32));
+	}
+        
+        //----------------------------------------------------------------------------------------------
+        //----------------------------------------------------------------------------------------------
+        //---------------------------------------------------------------------------------------------------------------
+        if(f18.getState()==true && times.getState()==true)
+	{
+                l.setFont(new Font("Times New Roman",Font.PLAIN,18));
+                t.setFont(new Font("Times New Roman",Font.PLAIN,18));
+	}   
+            
+        if(f20.getState()==true && times.getState()==true)
+	{
+                l.setFont(new Font("Times New Roman",Font.PLAIN,20));
+                t.setFont(new Font("Times New Roman",Font.PLAIN,20));
+	} 
+        
+        if(f24.getState()==true && times.getState()==true)
+	{
+                l.setFont(new Font("Times New Roman",Font.PLAIN,24));
+                t.setFont(new Font("Times New Roman",Font.PLAIN,24));
+	}   
+        
+        if(f26.getState()==true && times.getState()==true)
+	{
+                l.setFont(new Font("Times New Roman",Font.PLAIN,26));
+                t.setFont(new Font("Times New Roman",Font.PLAIN,26));
+	}   
+        
+        if(f28.getState()==true && times.getState()==true)
+	{
+                l.setFont(new Font("Times New Roman",Font.PLAIN,28));
+                t.setFont(new Font("Times New Roman",Font.PLAIN,28));
+	}   
+        
+        if(f32.getState()==true && times.getState()==true)
+	{
+                l.setFont(new Font("Times New Roman",Font.PLAIN,32));
+                t.setFont(new Font("Times New Roman",Font.PLAIN,32));
+	}   
+        //----------------------------------------------------------------------------------------------
+        
+        if(f18.getState()==true && times.getState()==true  &&bold.getState()==true)
+	{
+                l.setFont(new Font("Times New Roman",Font.BOLD,18));
+                t.setFont(new Font("Times New Roman",Font.BOLD,18));
+	}   
+            
+        if(f20.getState()==true && times.getState()==true  &&bold.getState()==true)
+	{
+                l.setFont(new Font("Times New Roman",Font.BOLD,20));
+                t.setFont(new Font("Times New Roman",Font.BOLD,20));
+	} 
+        
+        if(f24.getState()==true && times.getState()==true  &&bold.getState()==true)
+	{
+                l.setFont(new Font("Times New Roman",Font.BOLD,24));
+                t.setFont(new Font("Times New Roman",Font.BOLD,24));
+	}   
+        
+        if(f26.getState()==true && times.getState()==true  &&bold.getState()==true)
+	{
+                l.setFont(new Font("Times New Roman",Font.BOLD,26));
+                t.setFont(new Font("Times New Roman",Font.BOLD,26));
+	}   
+        
+        if(f28.getState()==true && times.getState()==true  &&bold.getState()==true)
+	{
+                l.setFont(new Font("Times New Roman",Font.BOLD,28));
+                t.setFont(new Font("Times New Roman",Font.BOLD,28));
+	}   
+        
+        if(f32.getState()==true && times.getState()==true  &&bold.getState()==true)
+	{
+                l.setFont(new Font("Times New Roman",Font.BOLD,32));
+                t.setFont(new Font("Times New Roman",Font.BOLD,32));
+	}
+        //----------------------------------------------------------------------------------------------
+        
+        if(f18.getState()==true && times.getState()==true &&italic.getState()==true)
+	{
+                l.setFont(new Font("Times New Roman",Font.ITALIC,18));
+                t.setFont(new Font("Times New Roman",Font.ITALIC,18));
+	}   
+            
+        if(f20.getState()==true && times.getState()==true &&italic.getState()==true)
+	{
+                l.setFont(new Font("Times New Roman",Font.ITALIC,20));
+                t.setFont(new Font("Times New Roman",Font.ITALIC,20));
+	} 
+        
+        if(f24.getState()==true && times.getState()==true &&italic.getState()==true)
+	{
+                l.setFont(new Font("Times New Roman",Font.ITALIC,24));
+                t.setFont(new Font("Times New Roman",Font.ITALIC,24));
+	}   
+        
+        if(f26.getState()==true && times.getState()==true &&italic.getState()==true)
+	{
+                l.setFont(new Font("Times New Roman",Font.ITALIC,26));
+                t.setFont(new Font("Times New Roman",Font.ITALIC,26));
+	}   
+        
+        if(f28.getState()==true && times.getState()==true &&italic.getState()==true)
+	{
+                l.setFont(new Font("Times New Roman",Font.ITALIC,28));
+                t.setFont(new Font("Times New Roman",Font.ITALIC,28));
+	}   
+        
+        if(f32.getState()==true && times.getState()==true &&italic.getState()==true)
+	{
+                l.setFont(new Font("Times New Roman",Font.ITALIC,32));
+                t.setFont(new Font("Times New Roman",Font.ITALIC,32));
+	}
+    }
+}
+
+//-------------------------------------------------ACTIONEVENT----------------------------------------------------------
+
+	public void actionPerformed(ActionEvent ae)
+	{
+ 
+		if((ae.getSource()==close))
+			System.exit(0);
+
+		if(ae.getSource() == newf)
+		{		
+			Notepad n1 = new Notepad();
+			n1.setVisible(true);
+			n1.setSize(500,500);
+			n1.setTitle("NEW");
+			n1.dispose();
+			
+			
+			Image icon = Toolkit.getDefaultToolkit().getImage("C:/Users/DELL/Pictures/Screenshots/notepad.png");    
+			n1.setIconImage(icon);
+			n1.setVisible(true);
+		}
+
+		if(ae.getSource() == open) 
+		{
+                      FileDialog f = new FileDialog(this,"OPEN",FileDialog.LOAD);
+			f.setVisible(true);
+	
+			try
+			{	
+                                String fn,fa,line=null;
+                                fn = f.getFile();
+                                fa = f.getDirectory();
+                                BufferedReader br = new BufferedReader(new FileReader(fa+fn));
+                                setTitle(f.getFile());
+                                t.setBackground(Color.WHITE);
+                                t.setForeground(Color.BLACK);
+                                t.setText("");
+                                
+                                line = br.readLine();
+                                x = Integer.parseInt(line);
+                                Color c = new Color(x);
+                                t.setBackground(c);
+                                t.setText("");
+                                
+                                line = br.readLine();
+                                x1 = Integer.parseInt(line);
+                                Color c1 = new Color(x1);
+                                t.setForeground(c1);
+                                t.setText("");
+                                
+                                line = br.readLine();
+                                str = line.split("\\=|\\,|\\]");
+                                x2 = Integer.parseInt(str[7]);
+                              
+                              if(str[5].equalsIgnoreCase("plain")==true)
+                                {
+                                    t.setFont(new Font(str[3],Font.PLAIN,x2));
+                                   
+                                }
+                                else if(str[5].equalsIgnoreCase("bold")==true)
+                                {
+                                    t.setFont(new Font(str[3],Font.BOLD,x2));
+                                    
+                                }
+                                else if(str[5].equalsIgnoreCase("italic")==true)
+                                {
+                                    t.setFont(new Font(str[3],Font.ITALIC,x2));
+                                    
+                                }
+                               t.setText("");
+                                        
+				while((line = br.readLine())!=null)
+				{
+					t.append(line+"\n");
+				};
+				br.close();
+			}
+			catch(Exception e)
+			{
+				System.out.print("File not found");
+			}
+		
+		}
+
+		if(ae.getSource() == save) 
+		{
+                     try
+                    {
+                        if(i==0)
+                        {
+                            File fl = new File("NEW NOTEPAD.txt");
+                            FileWriter fw = new FileWriter(fl);
+                            setTitle(fl.getName());
+                            fw.write(""+ch.getRGB());
+                            fw.write("\n");
+                        
+                            fw.write(""+ch1.getRGB());
+                            fw.write("\n");
+                            
+                            fw.write(""+t.getFont());
+                            fw.write("\n");
+                            
+                            fw.write(t.getText());
+                            fw.close();
+                        }
+                        else
+                        {
+                            File fl = new File(f.getDirectory(),f.getFile());
+                            FileWriter fw = new FileWriter(fl);
+                            setTitle(fl.getName());
+                            fw.write(""+ch.getRGB());
+                            fw.write("\n");
+                            
+                            fw.write(""+ch1.getRGB());
+                            fw.write("\n");
+                            
+                            fw.write(""+t.getFont());
+                            fw.write("\n");
+                            
+                            fw.write(t.getText());
+                            fw.close();
+                        }
+                        
+                    } catch(Exception e){}
+                }
+                
+		if(ae.getSource() == saveas)
+		{
+                       f = new FileDialog(this,"SAVE AS",FileDialog.SAVE);
+                       f.setVisible(true);
+                        
+                    try
+                    {
+                        i =1;
+                        File fl = new File(f.getDirectory(),f.getFile());
+			            FileWriter fw = new FileWriter(fl);
+                        setTitle(f.getFile());
+                        fw.write(""+ch.getRGB());
+                        fw.write("\n");
+                        
+                        fw.write(""+ch1.getRGB());
+                        fw.write("\n");
+                        
+                        fw.write(""+t.getFont());
+                        fw.write("\n");
+                        
+                        fw.write(t.getText());
+                        fw.close();
+                    }catch(Exception e){}
+                    
+		}
+                
+                if(ae.getSource() == selectall)
+		{
+			t.selectAll();
+		}
+
+		if(ae.getSource() == print) 
+		{
+			try
+			{
+				boolean complete = t.print();
+				if(complete)
+				{
+					JOptionPane.showMessageDialog(null,"Done Printing","INFORMATION",JOptionPane.INFORMATION_MESSAGE);
+				}
+				else
+				{
+					JOptionPane.showMessageDialog(null,"Printing!!!","INFORMATION",JOptionPane.ERROR_MESSAGE);
+				}	
+			}
+			catch(Exception pe)
+			{
+				JOptionPane.showMessageDialog(null,pe);		
+			}
+		
+		}
+
+		if(ae.getSource() == bcolor)
+		{	
+			BackgroundColour bg = new BackgroundColour();
+			Color ch = bg.setBackgroundColour(this);
+			t.setBackground(ch);
+                }
+		
+		if(ae.getSource() == tcolor)
+		{	
+			BackgroundColour bg = new BackgroundColour();
+			Color ch1 = bg.setForegroundColour(this);
+			t.setForeground(ch1);
+		}
+ 
+		if(ae.getSource() == undo)
+		{
+                    try 
+                    {
+                        undo1.undo();
+                    }   
+                    catch (CannotRedoException cre)
+                    {
+                       cre.printStackTrace();
+                    }
+		}
+
+		if(ae.getSource() == redo)
+		{
+                    try
+                    {
+                        undo1.redo();
+                    } 
+                    catch (CannotRedoException cre) 
+                    {
+                        cre.printStackTrace();
+                    }
+		}
+                
+                if(ae.getSource() == cut) 
+		{
+			t.cut();
+		}
+                if(ae.getSource() == copy)
+		{
+                   text = t.getSelectedText();
+                }
+                   
+                if(ae.getSource() == paste)
+		{
+                   t.insert(text,t.getCaretPosition());
+                }
+                
+
+                if(ae.getSource()==about)
+                {
+                    AboutNotepad();
+                }
+                
+                if(ae.getSource() == font)
+                {  
+                   FontStyles fs= new FontStyles();
+                   fs.setFonts(this);
+                }
+                
+                if(ae.getSource()==zoomin)
+                {
+                     String zstr = ""+t.getFont();
+                     String zstr1[] = zstr.split("\\=|\\,|\\]");
+                     int zx = Integer.parseInt(zstr1[7]);
+                     if(zstr1[5].equalsIgnoreCase("plain")==true)
+                     {
+                        t.setFont(new Font(zstr1[3],Font.PLAIN,zx+2));
+                     }
+                     else if(zstr1[5].equalsIgnoreCase("bold")==true)
+                     {
+                        t.setFont(new Font(zstr1[3],Font.BOLD,zx+2));
+                     }
+                     else if(zstr1[5].equalsIgnoreCase("italic")==true)
+                     {
+                        t.setFont(new Font(zstr1[3],Font.ITALIC,zx+2));   
+                     }
+                }
+                
+                if(ae.getSource()==zoomout)
+                {
+                    String zstr = ""+t.getFont();
+                    String zstr1[] = zstr.split("\\=|\\,|\\]");
+                    int zx = Integer.parseInt(zstr1[7]);
+                     if(zstr1[5].equalsIgnoreCase("plain")==true)
+                     {
+                        t.setFont(new Font(zstr1[3],Font.PLAIN,zx-2));
+                     }
+                     else if(zstr1[5].equalsIgnoreCase("bold")==true)
+                     {
+                        t.setFont(new Font(zstr1[3],Font.BOLD,zx-2));
+                     }
+                     else if(zstr1[5].equalsIgnoreCase("italic")==true)
+                     {
+                         t.setFont(new Font(zstr1[3],Font.ITALIC,zx-2));
+                     }
+                }
+	}
+
+            
+    
+//-------------------------------------------------ABOUT--------------------------------------------------------------------------
+public void AboutNotepad()
+{
+        JFrame frame = new JFrame("About Notepad");       
+        frame.dispose();
+        frame.setSize(1000,1000);
+        Image icon = Toolkit.getDefaultToolkit().getImage("C:/Users/DELL/Pictures/Screenshots/notepad.png");    
+	frame.setIconImage(icon);
+	frame.setVisible(true);
+           
+        frame.add(new JLabel(new ImageIcon("notepad.png"))).setBounds(900,50,900,900);
+        
+        JLabel l2= new JLabel("<html><br><br><br>&nbsp;&nbsp;&nbsp;&nbsp;<ul>ADVANCED NOTEPAD </ul></html>");
+        l2.setFont(new Font("MONOSPACED", Font.BOLD, 30));
+        frame.add(l2);
+   
+        JLabel l3= new JLabel("<html>&nbsp;&nbsp;Name: TEJASWINI KATALE <br>&nbsp;&nbsp;Roll No : 48 Div 'B'<br><br><br><b>&nbsp;&nbsp;Notepad is a simple text editor for Microsoft Windows developed by ASA teams<br>&nbsp;&nbsp;and a basic text-editing program which enables<br>&nbsp;&nbsp;computer users to create documents.</b></html>");
+        l3.setBounds(140, 90, 800, 570);
+        l3.setFont(new Font("MONOSPACED", Font.ROMAN_BASELINE, 22));
+        frame.setSize(800,800);
+      
+        frame.getContentPane().add(l2,BorderLayout.PAGE_START);
+        frame.getContentPane().add(l3, BorderLayout.CENTER); 
+        frame.setLocationRelativeTo(null);      
+        frame.pack();       
+        frame.setVisible(true);   
+ }
+
+//--------------------------------------------MAIN-----------------------------------------------------------------------
+    public static void main(String args[])
+	{
+		Notepad n = new Notepad();
+		n.setVisible(true);
+		n.setSize(1000,1000);
+		n.setTitle("NOTEPAD");
+		n.setDefaultCloseOperation(EXIT_ON_CLOSE);
+		Image icon = Toolkit.getDefaultToolkit().getImage("C:/Users/DELL/Pictures/Screenshots/notepad.png");    
+		n.setIconImage(icon);
+		n.setVisible(true);
+	}
+}
